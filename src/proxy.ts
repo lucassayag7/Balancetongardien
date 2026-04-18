@@ -25,20 +25,24 @@ export async function proxy(request: NextRequest) {
     }
   );
 
-  const { data: { user } } = await supabase.auth.getUser();
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
 
-  const isAuthPage = request.nextUrl.pathname.startsWith("/auth");
-  const isPublicPage =
-    request.nextUrl.pathname === "/" ||
-    request.nextUrl.pathname.startsWith("/immeuble") ||
-    request.nextUrl.pathname.startsWith("/carte");
+    const isAuthPage = request.nextUrl.pathname.startsWith("/auth");
+    const isPublicPage =
+      request.nextUrl.pathname === "/" ||
+      request.nextUrl.pathname.startsWith("/immeuble") ||
+      request.nextUrl.pathname.startsWith("/carte");
 
-  if (!user && !isAuthPage && !isPublicPage) {
-    return NextResponse.redirect(new URL("/auth", request.url));
-  }
+    if (!user && !isAuthPage && !isPublicPage) {
+      return NextResponse.redirect(new URL("/auth", request.url));
+    }
 
-  if (user && isAuthPage) {
-    return NextResponse.redirect(new URL("/", request.url));
+    if (user && isAuthPage) {
+      return NextResponse.redirect(new URL("/", request.url));
+    }
+  } catch {
+    // Si Supabase est inaccessible, on laisse passer sans bloquer
   }
 
   return supabaseResponse;
