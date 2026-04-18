@@ -1,0 +1,200 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model User {
+  id          String   @id @default(cuid())
+  email       String   @unique
+  pseudo      String   @unique
+  phone       String?
+  verified    Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  reports     Report[]
+  validations Validation[]
+  buildings   BuildingUser[]
+  actions     Action[]
+
+  @@map("users")
+}
+
+model Building {
+  id                   String   @id @default(cuid())
+  address              String
+  postalCode           String
+  city                 String
+  lat                  Float
+  lng                  Float
+  score                Float    @default(0)
+  reportCount          Int      @default(0)
+  verifiedResidentCount Int     @default(0)
+  trend                BuildingTrend @default(STABLE)
+  syndicName           String?
+  syndicEmail          String?
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+
+  reports   Report[]
+  residents BuildingUser[]
+
+  @@index([lat, lng])
+  @@index([postalCode])
+  @@map("buildings")
+}
+
+model BuildingUser {
+  id         String   @id @default(cuid())
+  buildingId String
+  userId     String
+  verified   Boolean  @default(false)
+  joinedAt   DateTime @default(now())
+
+  building Building @relation(fields: [buildingId], references: [id], onDelete: Cascade)
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([buildingId, userId])
+  @@map("building_users")
+}
+
+model Report {
+  id          String     @id @default(cuid())
+  buildingId  String
+  userId      String
+  category    Category
+  subcategory String?
+  severity    Severity   @default(MODERE)
+  recurrence  Recurrence @default(PREMIERE_FOIS)
+  description String?
+  visibility  Visibility @default(PUBLIC)
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  building    Building     @relation(fields: [buildingId], references: [id], onDelete: Cascade)
+  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  media       Media[]
+  validations Validation[]
+  actions     Action[]
+
+  @@index([buildingId])
+  @@index([userId])
+  @@index([category])
+  @@index([createdAt])
+  @@map("reports")
+}
+
+model Media {
+  id           String    @id @default(cuid())
+  reportId     String
+  type         MediaType
+  url          String
+  thumbnailUrl String?
+  lat          Float?
+  lng          Float?
+  capturedAt   DateTime?
+  createdAt    DateTime  @default(now())
+
+  report Report @relation(fields: [reportId], references: [id], onDelete: Cascade)
+
+  @@map("media")
+}
+
+model Validation {
+  id        String         @id @default(cuid())
+  reportId  String
+  userId    String
+  type      ValidationType @default(CONFIRM)
+  comment   String?
+  createdAt DateTime       @default(now())
+
+  report Report @relation(fields: [reportId], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([reportId, userId])
+  @@map("validations")
+}
+
+model Action {
+  id          String       @id @default(cuid())
+  reportId    String
+  userId      String
+  type        ActionType
+  status      ActionStatus @default(DRAFT)
+  documentUrl String?
+  sentAt      DateTime?
+  respondedAt DateTime?
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  report Report @relation(fields: [reportId], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("actions")
+}
+
+// ─── Enums ─────────────────────────────────────────────────────────
+
+enum Category {
+  NETTOYAGE
+  MAINTENANCE
+  PRESENCE
+  COMPORTEMENT
+  SECURITE
+  ADMINISTRATIF
+}
+
+enum Severity {
+  MINEUR
+  MODERE
+  GRAVE
+}
+
+enum Recurrence {
+  PREMIERE_FOIS
+  RECURRENT
+  CHRONIQUE
+}
+
+enum Visibility {
+  PUBLIC
+  VOISINS
+  PRIVE
+}
+
+enum MediaType {
+  IMAGE
+  VIDEO
+  AUDIO
+}
+
+enum ValidationType {
+  CONFIRM
+  DENY
+}
+
+enum ActionType {
+  LETTER_SYNDIC
+  LETTER_BAILLEUR
+  LETTER_MAIRIE
+  LETTER_PREFECTURE
+  AR24
+}
+
+enum ActionStatus {
+  DRAFT
+  SENT
+  RESPONDED
+  IGNORED
+}
+
+enum BuildingTrend {
+  IMPROVING
+  STABLE
+  DEGRADING
+}

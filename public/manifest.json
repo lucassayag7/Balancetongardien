@@ -1,0 +1,36 @@
+{
+  "name": "Balance ton gardien",
+  "short_name": "BTG",
+  "description": "Signalez les manquements de votre gardien d'immeuble",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#FAFAF9",
+  "theme_color": "#E8400C",
+  "categories": ["social", "utilities"],
+  "lang": "fr",
+  "icons": [
+    {
+      "src": "/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "screenshots": [],
+  "shortcuts": [
+    {
+      "name": "Nouveau signalement",
+      "short_name": "Signaler",
+      "description": "Créer un nouveau signalement rapidement",
+      "url": "/signaler",
+      "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }]
+    }
+  ]
+}

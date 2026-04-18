@@ -1,0 +1,137 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --brand: #E8400C;
+  --brand-dark: #C43509;
+  --surface: #FAFAF9;
+  --card: #FFFFFF;
+  --border: #E7E5E4;
+  --text-primary: #1C1917;
+  --text-secondary: #78716C;
+  --text-muted: #A8A29E;
+  --nav-height: 64px;
+  --header-height: 56px;
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+* {
+  -webkit-tap-highlight-color: transparent;
+  -webkit-touch-callout: none;
+}
+
+html {
+  font-size: 16px;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  background-color: var(--surface);
+  color: var(--text-primary);
+  overscroll-behavior: none;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Mobile scroll lock */
+.scroll-lock {
+  overflow: hidden;
+  position: fixed;
+  width: 100%;
+}
+
+/* Hide scrollbar */
+.scrollbar-hide::-webkit-scrollbar { display: none; }
+.scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+
+/* Custom scroll snap */
+.snap-x-mandatory {
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+}
+.snap-center { scroll-snap-align: center; }
+
+/* Category chip active state */
+.chip-active {
+  background-color: var(--brand);
+  color: white;
+}
+
+/* Glass morphism */
+.glass {
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+/* Bottom sheet drag handle */
+.drag-handle {
+  width: 36px;
+  height: 4px;
+  background: #D6D3D1;
+  border-radius: 2px;
+  margin: 0 auto 16px;
+}
+
+/* Report card image overlay */
+.card-gradient {
+  background: linear-gradient(
+    to top,
+    rgba(0, 0, 0, 0.7) 0%,
+    rgba(0, 0, 0, 0.2) 50%,
+    transparent 100%
+  );
+}
+
+/* Score ring */
+.score-ring {
+  transform: rotate(-90deg);
+  transform-origin: center;
+}
+
+/* Pulse animation for new badge */
+@keyframes pulse-brand {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(232, 64, 12, 0.4); }
+  50% { box-shadow: 0 0 0 8px rgba(232, 64, 12, 0); }
+}
+
+.pulse-brand {
+  animation: pulse-brand 2s ease-in-out infinite;
+}
+
+/* Input focus */
+input:focus, textarea:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--brand);
+}
+
+/* Checkbox custom */
+input[type="radio"]:checked {
+  accent-color: var(--brand);
+}
+
+/* Bottom nav safe area */
+.bottom-nav {
+  padding-bottom: calc(var(--safe-bottom) + 8px);
+}
+
+/* Page transition */
+.page-enter {
+  animation: fadeIn 0.2s ease-out;
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    #f0efee 25%,
+    #e7e5e4 50%,
+    #f0efee 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
