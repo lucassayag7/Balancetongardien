@@ -3,10 +3,11 @@ import { prisma } from "@/lib/prisma";
 
 export async function GET(
   _request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   const building = await prisma.building.findUnique({
-    where: { id: params.id },
+    where: { id },
     include: {
       reports: {
         where: { visibility: { not: "PRIVE" } },
