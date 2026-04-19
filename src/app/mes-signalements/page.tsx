@@ -55,7 +55,7 @@ export default function MesSignalementsPage() {
   const sentCount = reports.filter((r) => r.actions.some((a) => a.status === "SENT")).length;
 
   return (
-    <div className="min-h-screen bg-surface pb-24">
+    <div className="h-screen flex flex-col overflow-hidden bg-surface">
       <Header
         title="Mes alertes"
         rightAction={
@@ -69,7 +69,7 @@ export default function MesSignalementsPage() {
       />
 
       {/* Tabs */}
-      <div className="px-4 py-3">
+      <div className="flex-shrink-0 px-4 py-3 bg-surface border-b border-stone-100">
         <div className="flex bg-stone-100 rounded-2xl p-1">
           <button
             onClick={() => setActiveTab("mes")}
@@ -97,7 +97,8 @@ export default function MesSignalementsPage() {
         </div>
       </div>
 
-      <div className="px-4 space-y-4">
+      <div className="flex-1 overflow-y-auto">
+      <div className="px-4 space-y-4 pb-20">
         {activeTab === "mes" && (
           <>
             {/* Stats */}
@@ -166,6 +167,7 @@ export default function MesSignalementsPage() {
             ))}
           </div>
         )}
+      </div>
       </div>
 
       <BottomNav />

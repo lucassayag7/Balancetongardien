@@ -88,7 +88,7 @@ export default function ComptePage() {
     : "";
 
   return (
-    <div className="min-h-screen bg-surface pb-24">
+    <div className="h-screen flex flex-col overflow-hidden bg-surface">
       <Header
         title="Mon profil"
         rightAction={
@@ -98,7 +98,8 @@ export default function ComptePage() {
         }
       />
 
-      <div className="px-4 pt-4 space-y-5">
+      <div className="flex-1 overflow-y-auto">
+      <div className="px-4 pt-4 space-y-5 pb-20">
         {/* Profile card */}
         <div className="bg-white rounded-2xl border border-stone-100 shadow-card p-5">
           <div className="flex items-center gap-4">
@@ -226,6 +227,7 @@ export default function ComptePage() {
         <p className="text-center text-[10px] text-stone-300 pb-2">
           Balance ton gardien v1.0.0 · Données protégées RGPD
         </p>
+      </div>
       </div>
 
       <BottomNav />

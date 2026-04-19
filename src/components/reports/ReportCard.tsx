@@ -80,7 +80,8 @@ export default function ReportCard({ report, compact = false, onValidated }: Rep
 
   if (compact) {
     return (
-      <div className="bg-white rounded-2xl border border-stone-100 shadow-card overflow-hidden">
+      <Link href={`/immeuble/${report.buildingId}`}>
+      <div className="bg-white rounded-2xl border border-stone-100 shadow-card overflow-hidden active:scale-[0.98] transition-transform">
         <div className="flex gap-3 p-3">
           {hasImage && (
             <div className="relative w-16 h-16 rounded-xl overflow-hidden flex-shrink-0">
@@ -108,6 +109,7 @@ export default function ReportCard({ report, compact = false, onValidated }: Rep
           </div>
         </div>
       </div>
+      </Link>
     );
   }
 

@@ -62,9 +62,9 @@ export default function ImmeubleDetailPage({ params }: { params: Promise<{ id: s
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-surface pb-24">
+      <div className="h-screen flex flex-col overflow-hidden bg-surface">
         <Header showBack title="Chargement..." />
-        <div className="px-4 pt-4 space-y-3">
+        <div className="flex-1 overflow-y-auto px-4 pt-4 space-y-3 pb-20">
           {[1, 2, 3].map((i) => <ReportCardSkeleton key={i} />)}
         </div>
         <BottomNav />
@@ -74,9 +74,9 @@ export default function ImmeubleDetailPage({ params }: { params: Promise<{ id: s
 
   if (!building) {
     return (
-      <div className="min-h-screen bg-surface pb-24">
+      <div className="h-screen flex flex-col overflow-hidden bg-surface">
         <Header showBack title="Immeuble introuvable" />
-        <div className="flex flex-col items-center justify-center py-20 px-4 text-center">
+        <div className="flex-1 flex flex-col items-center justify-center px-4 text-center">
           <AlertCircle size={48} className="text-stone-200 mb-4" />
           <p className="text-sm text-stone-600 mb-4">Cet immeuble n'existe pas ou a été supprimé.</p>
           <Link href="/">
@@ -91,7 +91,7 @@ export default function ImmeubleDetailPage({ params }: { params: Promise<{ id: s
   }
 
   return (
-    <div className="min-h-screen bg-surface pb-24">
+    <div className="h-screen flex flex-col overflow-hidden bg-surface">
       <Header
         showBack
         title={building.address}
@@ -103,7 +103,8 @@ export default function ImmeubleDetailPage({ params }: { params: Promise<{ id: s
         }
       />
 
-      <div className="space-y-4">
+      <div className="flex-1 overflow-y-auto">
+      <div className="space-y-4 pb-20">
         {/* Score hero */}
         <div className="bg-white px-4 py-5 border-b border-stone-100">
           <div className="flex items-center gap-5 mb-4">
@@ -268,6 +269,7 @@ export default function ImmeubleDetailPage({ params }: { params: Promise<{ id: s
             </div>
           )}
         </div>
+      </div>
       </div>
 
       {/* Action bottom sheet */}

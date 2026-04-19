@@ -66,9 +66,9 @@ export default function HomePage() {
   const confirmed = reports.filter((r) => r.validations.some((v) => v.type === "CONFIRM")).length;
 
   return (
-    <div className="min-h-screen bg-surface pb-24">
+    <div className="h-screen flex flex-col overflow-hidden bg-surface">
       {/* Header */}
-      <header className="sticky top-0 z-30 bg-white border-b border-stone-100">
+      <header className="flex-shrink-0 bg-white border-b border-stone-100 z-30">
         <div className="px-4 py-3">
           <div className="flex items-center justify-between mb-3">
             <div>
@@ -109,7 +109,8 @@ export default function HomePage() {
         </div>
       </header>
 
-      <div className="px-4 pt-4 space-y-5">
+      <div className="flex-1 overflow-y-auto">
+      <div className="px-4 pt-4 space-y-5 pb-20">
         {/* Mon immeuble */}
         <section>
           <h2 className="text-xs font-semibold text-stone-400 uppercase tracking-wider mb-2.5">
@@ -214,6 +215,7 @@ export default function HomePage() {
             </div>
           )}
         </section>
+      </div>
       </div>
 
       {/* FAB */}
