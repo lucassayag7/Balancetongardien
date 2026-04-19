@@ -74,6 +74,7 @@ export default function ComptePage() {
       const supabase = createClient();
       await supabase.auth.signOut();
       router.push("/auth");
+      router.refresh();
     } catch {
       setSigningOut(false);
     }

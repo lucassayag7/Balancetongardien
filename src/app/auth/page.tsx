@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import { Eye, EyeOff, ArrowRight, Check } from "lucide-react";
 import { signIn, signUp } from "@/lib/auth-actions";
 import { cn } from "@/lib/utils";
@@ -11,7 +12,9 @@ export default function AuthPage() {
   const [mode, setMode] = useState<Mode>("signup");
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const router = useRouter();
   const [isPending, startTransition] = useTransition();
+  const [signupSuccess, setSignupSuccess] = useState(false);
   const [form, setForm] = useState({
     email: "",
     password: "",
@@ -31,17 +34,40 @@ export default function AuthPage() {
     e.preventDefault();
     setError(null);
     startTransition(async () => {
-      const result =
-        mode === "signup"
-          ? await signUp({ email: form.email, password: form.password, pseudo: form.pseudo })
-          : await signIn({ email: form.email, password: form.password });
-
-      if (result?.error) setError(result.error);
+      if (mode === "signup") {
+        const result = await signUp({ email: form.email, password: form.password, pseudo: form.pseudo });
+        if (result?.error) { setError(result.error); return; }
+        setSignupSuccess(true);
+      } else {
+        const result = await signIn({ email: form.email, password: form.password });
+        if (result?.error) { setError(result.error); return; }
+        router.push("/");
+        router.refresh();
+      }
     });
   };
 
   const canSubmit =
     form.email && form.password && (mode === "login" || (form.pseudo && form.acceptTerms));
+
+  if (signupSuccess) {
+    return (
+      <div className="min-h-screen bg-surface flex flex-col items-center justify-center px-6 text-center">
+        <div className="text-6xl mb-4">📬</div>
+        <h2 className="text-xl font-bold text-stone-900 mb-2">Vérifiez vos emails !</h2>
+        <p className="text-sm text-stone-500 mb-6 leading-relaxed">
+          Un email de confirmation vous a été envoyé à <strong>{form.email}</strong>.
+          Cliquez sur le lien pour activer votre compte, puis revenez vous connecter.
+        </p>
+        <button
+          onClick={() => { setSignupSuccess(false); setMode("login"); }}
+          className="h-12 px-8 rounded-2xl bg-brand-500 text-white font-semibold text-sm"
+        >
+          Me connecter
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-surface flex flex-col">
