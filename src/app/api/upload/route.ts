@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createAdminClient } from "@/lib/supabase-server";
-import { getUser } from "@/lib/supabase-server";
+import { createClient, getUser } from "@/lib/supabase-server";
 
 const MAX_SIZE_MB = 10;
 const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp", "video/mp4", "video/quicktime"];
@@ -21,7 +20,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: `Fichier trop volumineux (max ${MAX_SIZE_MB}Mo)` }, { status: 400 });
     }
 
-    const supabase = await createAdminClient();
+    const supabase = await createClient();
     const ext = file.name.split(".").pop() ?? "jpg";
     const path = `${user.id}/${Date.now()}.${ext}`;
 
@@ -33,12 +32,11 @@ export async function POST(request: NextRequest) {
       .upload(path, buffer, { contentType: file.type, upsert: false });
 
     if (error) {
-      console.error("[upload]", error);
+      console.error("[upload error]", error.message);
       return NextResponse.json({ error: "Erreur upload: " + error.message }, { status: 500 });
     }
 
     const { data: { publicUrl } } = supabase.storage.from("media").getPublicUrl(path);
-
     return NextResponse.json({ url: publicUrl });
   } catch (e) {
     console.error("[POST /api/upload]", e);
