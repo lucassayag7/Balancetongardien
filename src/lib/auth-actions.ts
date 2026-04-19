@@ -18,7 +18,10 @@ export async function signUp(formData: {
     const { data, error } = await supabase.auth.signUp({
       email: formData.email,
       password: formData.password,
-      options: { data: { pseudo: formData.pseudo } },
+      options: {
+        data: { pseudo: formData.pseudo },
+        emailRedirectTo: `${process.env.NEXT_PUBLIC_APP_URL ?? "https://balancetongardien.vercel.app"}/api/auth/callback?next=/auth/confirmed`,
+      },
     });
 
     if (error) return { error: error.message };
