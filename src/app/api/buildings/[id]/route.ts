@@ -15,6 +15,7 @@ export async function GET(
           media: true,
           validations: { select: { id: true, type: true, userId: true } },
           actions: { select: { id: true, type: true, status: true } },
+          building: { select: { address: true, city: true, postalCode: true } },
         },
         orderBy: { createdAt: "desc" },
         take: 30,

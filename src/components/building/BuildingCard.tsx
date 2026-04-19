@@ -4,23 +4,26 @@ import Link from "next/link";
 import { MapPin, TrendingDown, TrendingUp, Minus, Users, AlertCircle } from "lucide-react";
 import ScoreGauge from "@/components/ui/ScoreGauge";
 import { cn } from "@/lib/utils";
-import { scoreBgColor } from "@/lib/mock-data";
-import type { Building } from "@/types";
+import type { BuildingAPI } from "@/lib/api";
 
 interface BuildingCardProps {
-  building: Building;
+  building: BuildingAPI;
   isMyBuilding?: boolean;
 }
 
-const TREND_CONFIG = {
+const TREND_CONFIG: Record<string, { icon: React.ElementType; label: string; color: string }> = {
+  IMPROVING: { icon: TrendingUp, label: "S'améliore", color: "text-green-600" },
   improving: { icon: TrendingUp, label: "S'améliore", color: "text-green-600" },
+  STABLE: { icon: Minus, label: "Stable", color: "text-stone-500" },
   stable: { icon: Minus, label: "Stable", color: "text-stone-500" },
+  DEGRADING: { icon: TrendingDown, label: "Se dégrade", color: "text-red-500" },
   degrading: { icon: TrendingDown, label: "Se dégrade", color: "text-red-500" },
 };
 
 export default function BuildingCard({ building, isMyBuilding = false }: BuildingCardProps) {
-  const trend = TREND_CONFIG[building.trend];
+  const trend = TREND_CONFIG[building.trend] ?? TREND_CONFIG.STABLE;
   const TrendIcon = trend.icon;
+  const residents = building.verifiedResidentCount ?? building._count?.residents ?? 0;
 
   return (
     <Link href={`/immeuble/${building.id}`}>
@@ -39,10 +42,8 @@ export default function BuildingCard({ building, isMyBuilding = false }: Buildin
         )}
 
         <div className="flex items-start gap-4">
-          {/* Score */}
           <ScoreGauge score={building.score} size="md" />
 
-          {/* Info */}
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-1.5 mb-1">
               <MapPin size={12} className="text-stone-400 flex-shrink-0" />
@@ -55,13 +56,11 @@ export default function BuildingCard({ building, isMyBuilding = false }: Buildin
             </p>
 
             <div className="flex items-center gap-3">
-              {/* Trend */}
               <div className={cn("flex items-center gap-1", trend.color)}>
                 <TrendIcon size={12} />
                 <span className="text-[11px] font-medium">{trend.label}</span>
               </div>
 
-              {/* Stats */}
               <div className="flex items-center gap-1 text-stone-400">
                 <AlertCircle size={11} />
                 <span className="text-[11px]">{building.reportCount} signalements</span>
@@ -69,7 +68,7 @@ export default function BuildingCard({ building, isMyBuilding = false }: Buildin
 
               <div className="flex items-center gap-1 text-stone-400">
                 <Users size={11} />
-                <span className="text-[11px]">{building.verifiedResidentCount} vérifiés</span>
+                <span className="text-[11px]">{residents} vérifiés</span>
               </div>
             </div>
           </div>

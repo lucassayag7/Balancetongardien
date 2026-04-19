@@ -10,7 +10,7 @@ export async function GET() {
     where: { userId: user.id },
     include: {
       media: true,
-      validations: { select: { id: true, type: true } },
+      validations: { select: { id: true, type: true, userId: true } },
       actions: true,
       building: { select: { address: true, city: true, postalCode: true } },
     },

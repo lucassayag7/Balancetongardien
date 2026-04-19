@@ -1,56 +1,31 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
-import {
-  Bell,
-  Plus,
-  Filter,
-  CheckCircle2,
-  Clock,
-  AlertCircle,
-  ThumbsUp,
-} from "lucide-react";
+import { Plus, AlertCircle } from "lucide-react";
 import Header from "@/components/layout/Header";
 import BottomNav from "@/components/layout/BottomNav";
 import ReportCard from "@/components/reports/ReportCard";
-import { MOCK_REPORTS, MOCK_USER, timeAgo } from "@/lib/mock-data";
-import { CategoryBadge, SeverityBadge } from "@/components/ui/Badge";
+import { ReportCardSkeleton } from "@/components/ui/Skeleton";
+import { fetchMyReports } from "@/lib/api";
+import type { ReportAPI } from "@/lib/api";
 import { cn } from "@/lib/utils";
-
-const MY_REPORTS = MOCK_REPORTS.filter((r) => r.userId === "user-1");
 
 type TabId = "mes" | "notifications";
 
+function timeAgo(date: Date): string {
+  const diff = Date.now() - date.getTime();
+  const minutes = Math.floor(diff / 60000);
+  const hours = Math.floor(diff / 3600000);
+  const days = Math.floor(diff / 86400000);
+  if (minutes < 60) return `il y a ${minutes} min`;
+  if (hours < 24) return `il y a ${hours}h`;
+  return `il y a ${days}j`;
+}
+
 const NOTIFICATIONS = [
-  {
-    id: "n1",
-    type: "validation",
-    message: "Habitant_B a confirmé votre signalement sur les poubelles.",
-    time: new Date(Date.now() - 3600000),
-    read: false,
-  },
-  {
-    id: "n2",
-    type: "validation",
-    message: "Voisin3eme a confirmé votre signalement. +1 crédibilité !",
-    time: new Date(Date.now() - 7200000),
-    read: false,
-  },
-  {
-    id: "n3",
-    type: "action",
-    message: "Votre lettre au syndic a été envoyée avec succès.",
-    time: new Date(Date.now() - 86400000),
-    read: true,
-  },
-  {
-    id: "n4",
-    type: "building",
-    message: "Nouveau signalement dans votre immeuble : problème de sécurité.",
-    time: new Date(Date.now() - 172800000),
-    read: true,
-  },
+  { id: "n1", type: "validation", message: "Un voisin a confirmé votre signalement.", time: new Date(Date.now() - 3600000), read: false },
+  { id: "n2", type: "building", message: "Nouveau signalement dans votre immeuble.", time: new Date(Date.now() - 172800000), read: true },
 ];
 
 const NOTIFICATION_ICONS: Record<string, string> = {
@@ -62,7 +37,22 @@ const NOTIFICATION_ICONS: Record<string, string> = {
 
 export default function MesSignalementsPage() {
   const [activeTab, setActiveTab] = useState<TabId>("mes");
+  const [reports, setReports] = useState<ReportAPI[]>([]);
+  const [loading, setLoading] = useState(true);
   const unreadCount = NOTIFICATIONS.filter((n) => !n.read).length;
+
+  useEffect(() => {
+    fetchMyReports()
+      .then(({ reports }) => setReports(reports))
+      .catch(() => setReports([]))
+      .finally(() => setLoading(false));
+  }, []);
+
+  const confirmCount = reports.reduce(
+    (acc, r) => acc + r.validations.filter((v) => v.type === "CONFIRM").length,
+    0
+  );
+  const sentCount = reports.filter((r) => r.actions.some((a) => a.status === "SENT")).length;
 
   return (
     <div className="min-h-screen bg-surface pb-24">
@@ -85,20 +75,16 @@ export default function MesSignalementsPage() {
             onClick={() => setActiveTab("mes")}
             className={cn(
               "flex-1 h-9 rounded-xl text-sm font-medium transition-all",
-              activeTab === "mes"
-                ? "bg-white text-stone-900 shadow-sm"
-                : "text-stone-500"
+              activeTab === "mes" ? "bg-white text-stone-900 shadow-sm" : "text-stone-500"
             )}
           >
-            Mes signalements ({MY_REPORTS.length})
+            Mes signalements ({loading ? "…" : reports.length})
           </button>
           <button
             onClick={() => setActiveTab("notifications")}
             className={cn(
               "flex-1 h-9 rounded-xl text-sm font-medium transition-all relative",
-              activeTab === "notifications"
-                ? "bg-white text-stone-900 shadow-sm"
-                : "text-stone-500"
+              activeTab === "notifications" ? "bg-white text-stone-900 shadow-sm" : "text-stone-500"
             )}
           >
             Notifications
@@ -117,30 +103,28 @@ export default function MesSignalementsPage() {
             {/* Stats */}
             <div className="grid grid-cols-3 gap-2">
               <div className="bg-white rounded-2xl border border-stone-100 shadow-card p-3 text-center">
-                <p className="text-xl font-bold text-stone-900">{MY_REPORTS.length}</p>
+                <p className="text-xl font-bold text-stone-900">{loading ? "…" : reports.length}</p>
                 <p className="text-[10px] text-stone-500">Total</p>
               </div>
               <div className="bg-white rounded-2xl border border-stone-100 shadow-card p-3 text-center">
-                <p className="text-xl font-bold text-brand-500">
-                  {MY_REPORTS.reduce((acc, r) => acc + r.validations.filter((v) => v.type === "confirm").length, 0)}
-                </p>
+                <p className="text-xl font-bold text-brand-500">{loading ? "…" : confirmCount}</p>
                 <p className="text-[10px] text-stone-500">Confirmations</p>
               </div>
               <div className="bg-white rounded-2xl border border-stone-100 shadow-card p-3 text-center">
-                <p className="text-xl font-bold text-green-600">
-                  {MY_REPORTS.filter((r) => r.actions.some((a) => a.status === "sent")).length}
-                </p>
+                <p className="text-xl font-bold text-green-600">{loading ? "…" : sentCount}</p>
                 <p className="text-[10px] text-stone-500">Lettres envoyées</p>
               </div>
             </div>
 
             {/* Reports */}
-            {MY_REPORTS.length === 0 ? (
+            {loading ? (
+              <div className="space-y-3">
+                {[1, 2].map((i) => <ReportCardSkeleton key={i} />)}
+              </div>
+            ) : reports.length === 0 ? (
               <div className="text-center py-12">
                 <AlertCircle size={40} className="text-stone-200 mx-auto mb-3" />
-                <p className="text-sm font-medium text-stone-600 mb-1">
-                  Aucun signalement
-                </p>
+                <p className="text-sm font-medium text-stone-600 mb-1">Aucun signalement</p>
                 <p className="text-xs text-stone-400 mb-5">
                   Documentez les manquements de votre gardien.
                 </p>
@@ -152,7 +136,7 @@ export default function MesSignalementsPage() {
               </div>
             ) : (
               <div className="space-y-3">
-                {MY_REPORTS.map((report) => (
+                {reports.map((report) => (
                   <ReportCard key={report.id} report={report} compact />
                 ))}
               </div>
@@ -167,28 +151,17 @@ export default function MesSignalementsPage() {
                 key={notif.id}
                 className={cn(
                   "flex items-start gap-3 p-4 rounded-2xl border transition-all",
-                  notif.read
-                    ? "bg-white border-stone-100"
-                    : "bg-brand-50 border-brand-100"
+                  notif.read ? "bg-white border-stone-100" : "bg-brand-50 border-brand-100"
                 )}
               >
-                <span className="text-xl flex-shrink-0 mt-0.5">
-                  {NOTIFICATION_ICONS[notif.type]}
-                </span>
+                <span className="text-xl flex-shrink-0 mt-0.5">{NOTIFICATION_ICONS[notif.type]}</span>
                 <div className="flex-1">
-                  <p
-                    className={cn(
-                      "text-sm leading-relaxed",
-                      notif.read ? "text-stone-600" : "text-stone-900 font-medium"
-                    )}
-                  >
+                  <p className={cn("text-sm leading-relaxed", notif.read ? "text-stone-600" : "text-stone-900 font-medium")}>
                     {notif.message}
                   </p>
                   <p className="text-[11px] text-stone-400 mt-1">{timeAgo(notif.time)}</p>
                 </div>
-                {!notif.read && (
-                  <div className="w-2 h-2 bg-brand-500 rounded-full flex-shrink-0 mt-1.5" />
-                )}
+                {!notif.read && <div className="w-2 h-2 bg-brand-500 rounded-full flex-shrink-0 mt-1.5" />}
               </div>
             ))}
           </div>

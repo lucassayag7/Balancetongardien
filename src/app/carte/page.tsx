@@ -1,14 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
-import { MapPin, SlidersHorizontal, Search, TrendingDown, Info } from "lucide-react";
+import { TrendingDown } from "lucide-react";
 import Header from "@/components/layout/Header";
 import BottomNav from "@/components/layout/BottomNav";
 import ScoreGauge from "@/components/ui/ScoreGauge";
-import BottomSheet from "@/components/ui/BottomSheet";
-import { MOCK_BUILDINGS, scoreBgColor } from "@/lib/mock-data";
-import type { Building } from "@/types";
+import { fetchBuildings } from "@/lib/api";
+import type { BuildingAPI } from "@/lib/api";
 import { cn } from "@/lib/utils";
 
 const SCORE_FILTERS = [
@@ -26,11 +25,31 @@ function getBuildingPin(score: number) {
   return { color: "bg-green-500", size: "w-5 h-5", ring: "ring-green-200" };
 }
 
+const PIN_POSITIONS = [
+  { top: "28%", left: "22%" },
+  { top: "52%", left: "58%" },
+  { top: "38%", left: "72%" },
+  { top: "65%", left: "35%" },
+  { top: "45%", left: "45%" },
+  { top: "20%", left: "60%" },
+  { top: "75%", left: "65%" },
+  { top: "30%", left: "80%" },
+];
+
 export default function CartePage() {
-  const [selectedBuilding, setSelectedBuilding] = useState<Building | null>(null);
+  const [buildings, setBuildings] = useState<BuildingAPI[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [selectedBuilding, setSelectedBuilding] = useState<BuildingAPI | null>(null);
   const [activeFilter, setActiveFilter] = useState("all");
 
-  const filteredBuildings = MOCK_BUILDINGS.filter((b) => {
+  useEffect(() => {
+    fetchBuildings()
+      .then(({ buildings }) => setBuildings(buildings))
+      .catch(() => setBuildings([]))
+      .finally(() => setLoading(false));
+  }, []);
+
+  const filteredBuildings = buildings.filter((b) => {
     if (activeFilter === "all") return true;
     if (activeFilter === "critical") return b.score < 2;
     if (activeFilter === "bad") return b.score >= 2 && b.score < 3;
@@ -45,7 +64,6 @@ export default function CartePage() {
 
       {/* Map placeholder */}
       <div className="relative flex-1 bg-stone-200 overflow-hidden">
-        {/* Simulated map background */}
         <div
           className="absolute inset-0"
           style={{
@@ -67,15 +85,9 @@ export default function CartePage() {
         </div>
 
         {/* Building pins */}
-        {filteredBuildings.map((building, i) => {
+        {filteredBuildings.slice(0, PIN_POSITIONS.length).map((building, i) => {
           const pin = getBuildingPin(building.score);
-          const positions = [
-            { top: "30%", left: "25%" },
-            { top: "55%", left: "60%" },
-            { top: "40%", left: "70%" },
-          ];
-          const pos = positions[i] || { top: "50%", left: "50%" };
-
+          const pos = PIN_POSITIONS[i];
           return (
             <button
               key={building.id}
@@ -83,15 +95,11 @@ export default function CartePage() {
               className="absolute transform -translate-x-1/2 -translate-y-1/2"
               style={pos}
             >
-              <div
-                className={cn(
-                  "rounded-full ring-4 flex items-center justify-center shadow-lg transition-all",
-                  pin.color,
-                  pin.size,
-                  pin.ring,
-                  selectedBuilding?.id === building.id && "scale-125"
-                )}
-              >
+              <div className={cn(
+                "rounded-full ring-4 flex items-center justify-center shadow-lg transition-all",
+                pin.color, pin.size, pin.ring,
+                selectedBuilding?.id === building.id && "scale-125"
+              )}>
                 <span className="text-white text-[10px] font-bold">
                   {building.score.toFixed(1)}
                 </span>
@@ -100,7 +108,7 @@ export default function CartePage() {
           );
         })}
 
-        {/* Filter chips on map */}
+        {/* Filter chips */}
         <div className="absolute top-3 left-3 right-3">
           <div className="flex gap-1.5 overflow-x-auto scrollbar-hide pb-1">
             {SCORE_FILTERS.map((f) => (
@@ -109,9 +117,7 @@ export default function CartePage() {
                 onClick={() => setActiveFilter(f.id)}
                 className={cn(
                   "flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap shadow-sm transition-all",
-                  activeFilter === f.id
-                    ? "bg-stone-900 text-white"
-                    : "bg-white text-stone-700 active:bg-stone-100"
+                  activeFilter === f.id ? "bg-stone-900 text-white" : "bg-white text-stone-700 active:bg-stone-100"
                 )}
               >
                 <span className={cn("w-2 h-2 rounded-full flex-shrink-0", f.color)} />
@@ -121,30 +127,25 @@ export default function CartePage() {
           </div>
         </div>
 
-        {/* Légende */}
+        {/* Legend */}
         <div className="absolute bottom-4 right-3 bg-white rounded-xl shadow-card p-2.5">
           <p className="text-[10px] font-semibold text-stone-500 mb-1.5">Score</p>
           <div className="space-y-1">
-            <div className="flex items-center gap-1.5">
-              <div className="w-3 h-3 rounded-full bg-red-500" />
-              <span className="text-[10px] text-stone-600">&lt; 2 · Critique</span>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <div className="w-3 h-3 rounded-full bg-orange-500" />
-              <span className="text-[10px] text-stone-600">2-3 · Mauvais</span>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <div className="w-3 h-3 rounded-full bg-amber-400" />
-              <span className="text-[10px] text-stone-600">3-4 · Moyen</span>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <div className="w-3 h-3 rounded-full bg-green-500" />
-              <span className="text-[10px] text-stone-600">&gt; 4 · Bon</span>
-            </div>
+            {[
+              { color: "bg-red-500", label: "< 2 · Critique" },
+              { color: "bg-orange-500", label: "2-3 · Mauvais" },
+              { color: "bg-amber-400", label: "3-4 · Moyen" },
+              { color: "bg-green-500", label: "> 4 · Bon" },
+            ].map((l) => (
+              <div key={l.label} className="flex items-center gap-1.5">
+                <div className={cn("w-3 h-3 rounded-full", l.color)} />
+                <span className="text-[10px] text-stone-600">{l.label}</span>
+              </div>
+            ))}
           </div>
         </div>
 
-        {/* Info banner Mapbox */}
+        {/* Info banner */}
         <div className="absolute bottom-4 left-3 right-20 bg-black/60 backdrop-blur-sm rounded-xl p-2.5">
           <p className="text-[10px] text-white/80 text-center">
             🗺 Carte interactive — intégration Mapbox en production
@@ -156,7 +157,7 @@ export default function CartePage() {
       <div className="bg-white border-t border-stone-100 max-h-[30vh] overflow-y-auto">
         <div className="px-4 py-3 border-b border-stone-50">
           <p className="text-xs font-semibold text-stone-400 uppercase tracking-wide">
-            {filteredBuildings.length} immeuble{filteredBuildings.length > 1 ? "s" : ""} affiché{filteredBuildings.length > 1 ? "s" : ""}
+            {loading ? "Chargement..." : `${filteredBuildings.length} immeuble${filteredBuildings.length > 1 ? "s" : ""} affiché${filteredBuildings.length > 1 ? "s" : ""}`}
           </p>
         </div>
         <div className="divide-y divide-stone-50">
@@ -171,19 +172,22 @@ export default function CartePage() {
               >
                 <ScoreGauge score={building.score} size="sm" />
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-semibold text-stone-900 truncate">
-                    {building.address}
-                  </p>
+                  <p className="text-sm font-semibold text-stone-900 truncate">{building.address}</p>
                   <p className="text-xs text-stone-500">
                     {building.reportCount} signalements · {building.postalCode} {building.city}
                   </p>
                 </div>
-                {building.trend === "degrading" && (
+                {(building.trend === "DEGRADING" || building.trend === "degrading") && (
                   <TrendingDown size={14} className="text-red-500 flex-shrink-0" />
                 )}
               </div>
             </Link>
           ))}
+          {!loading && filteredBuildings.length === 0 && (
+            <div className="px-4 py-8 text-center">
+              <p className="text-sm text-stone-400">Aucun immeuble trouvé</p>
+            </div>
+          )}
         </div>
       </div>
 
