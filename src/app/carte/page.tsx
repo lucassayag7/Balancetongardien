@@ -1,10 +1,9 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
-import { TrendingDown, Loader2 } from "lucide-react";
-import Header from "@/components/layout/Header";
+import { MapPin, TrendingDown, TrendingUp, Minus, Loader2, AlertCircle, ChevronUp, X } from "lucide-react";
 import BottomNav from "@/components/layout/BottomNav";
 import ScoreGauge from "@/components/ui/ScoreGauge";
 import { fetchBuildings } from "@/lib/api";
@@ -14,25 +13,43 @@ import { cn } from "@/lib/utils";
 const MapView = dynamic(() => import("@/components/map/MapView"), {
   ssr: false,
   loading: () => (
-    <div className="flex-1 flex items-center justify-center bg-stone-100">
-      <Loader2 size={28} className="animate-spin text-stone-400" />
+    <div className="absolute inset-0 flex items-center justify-center bg-stone-100">
+      <div className="flex flex-col items-center gap-3">
+        <Loader2 size={28} className="animate-spin text-brand-500" />
+        <p className="text-xs text-stone-400 font-medium">Chargement de la carte…</p>
+      </div>
     </div>
   ),
 });
 
 const SCORE_FILTERS = [
-  { id: "all", label: "Tous", color: "bg-stone-500" },
-  { id: "critical", label: "Critique (< 2)", color: "bg-red-500" },
-  { id: "bad", label: "Mauvais (2-3)", color: "bg-orange-500" },
-  { id: "ok", label: "Moyen (3-4)", color: "bg-amber-500" },
-  { id: "good", label: "Bon (> 4)", color: "bg-green-500" },
+  { id: "all", label: "Tous" },
+  { id: "critical", label: "🔴 Critique" },
+  { id: "bad", label: "🟠 Mauvais" },
+  { id: "ok", label: "🟡 Moyen" },
+  { id: "good", label: "🟢 Bon" },
 ];
+
+function getTrend(trend: string) {
+  const t = trend?.toUpperCase();
+  if (t === "IMPROVING") return { icon: TrendingUp, label: "S'améliore", color: "text-green-600" };
+  if (t === "DEGRADING") return { icon: TrendingDown, label: "Se dégrade", color: "text-red-500" };
+  return { icon: Minus, label: "Stable", color: "text-stone-400" };
+}
+
+function getScoreColor(score: number) {
+  if (score < 2) return "text-red-600 bg-red-50";
+  if (score < 3) return "text-orange-600 bg-orange-50";
+  if (score < 4) return "text-amber-600 bg-amber-50";
+  return "text-green-600 bg-green-50";
+}
 
 export default function CartePage() {
   const [buildings, setBuildings] = useState<BuildingAPI[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedBuilding, setSelectedBuilding] = useState<BuildingAPI | null>(null);
+  const [selected, setSelected] = useState<BuildingAPI | null>(null);
   const [activeFilter, setActiveFilter] = useState("all");
+  const [sheetOpen, setSheetOpen] = useState(false);
 
   useEffect(() => {
     fetchBuildings()
@@ -41,7 +58,7 @@ export default function CartePage() {
       .finally(() => setLoading(false));
   }, []);
 
-  const filteredBuildings = buildings.filter((b) => {
+  const filtered = buildings.filter((b) => {
     if (activeFilter === "all") return true;
     if (activeFilter === "critical") return b.score < 2;
     if (activeFilter === "bad") return b.score >= 2 && b.score < 3;
@@ -50,99 +67,164 @@ export default function CartePage() {
     return true;
   });
 
-  return (
-    <div className="h-screen bg-surface flex flex-col overflow-hidden">
-      <Header title="Carte des signalements" />
+  const handleSelect = (b: BuildingAPI) => {
+    setSelected(b);
+    setSheetOpen(false);
+  };
 
-      {/* Map */}
-      <div className="relative flex-1 overflow-hidden">
+  return (
+    <div className="h-screen flex flex-col overflow-hidden">
+      {/* Map — full screen behind everything */}
+      <div className="absolute inset-0 bottom-[64px]">
         <MapView
-          buildings={filteredBuildings}
-          selectedId={selectedBuilding?.id}
-          onSelect={setSelectedBuilding}
+          buildings={filtered}
+          selectedId={selected?.id}
+          onSelect={handleSelect}
+          onDeselect={() => setSelected(null)}
         />
 
-        {/* Filter chips over the map */}
-        <div className="absolute top-3 left-3 right-3 z-[1000]">
-          <div className="flex gap-1.5 overflow-x-auto scrollbar-hide pb-1">
-            {SCORE_FILTERS.map((f) => (
-              <button
-                key={f.id}
-                onClick={() => setActiveFilter(f.id)}
-                className={cn(
-                  "flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap shadow-sm transition-all",
-                  activeFilter === f.id
-                    ? "bg-stone-900 text-white"
-                    : "bg-white text-stone-700 active:bg-stone-100"
-                )}
-              >
-                <span className={cn("w-2 h-2 rounded-full flex-shrink-0", f.color)} />
-                {f.label}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Score legend */}
-        <div className="absolute bottom-4 right-3 z-[1000] bg-white rounded-xl shadow-card p-2.5">
-          <p className="text-[10px] font-semibold text-stone-500 mb-1.5">Score</p>
-          <div className="space-y-1">
-            {[
-              { color: "bg-red-500", label: "< 2 · Critique" },
-              { color: "bg-orange-500", label: "2-3 · Mauvais" },
-              { color: "bg-amber-400", label: "3-4 · Moyen" },
-              { color: "bg-green-500", label: "> 4 · Bon" },
-            ].map((l) => (
-              <div key={l.label} className="flex items-center gap-1.5">
-                <div className={cn("w-3 h-3 rounded-full", l.color)} />
-                <span className="text-[10px] text-stone-600">{l.label}</span>
+        {/* Top filter bar */}
+        <div className="absolute top-0 left-0 right-0 z-[1000]">
+          {/* Header bar */}
+          <div className="bg-white/90 backdrop-blur-md px-4 pt-safe pt-4 pb-3 border-b border-stone-100/50 shadow-sm">
+            <div className="flex items-center gap-2 mb-3">
+              <div className="w-8 h-8 bg-brand-500 rounded-xl flex items-center justify-center">
+                <MapPin size={16} className="text-white" />
               </div>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      {/* Building list */}
-      <div className="bg-white border-t border-stone-100 max-h-[30vh] overflow-y-auto">
-        <div className="px-4 py-3 border-b border-stone-50">
-          <p className="text-xs font-semibold text-stone-400 uppercase tracking-wide">
-            {loading
-              ? "Chargement..."
-              : `${filteredBuildings.length} immeuble${filteredBuildings.length > 1 ? "s" : ""}`}
-          </p>
-        </div>
-        <div className="divide-y divide-stone-50">
-          {filteredBuildings.map((building) => (
-            <Link key={building.id} href={`/immeuble/${building.id}`}>
-              <div
-                onClick={() => setSelectedBuilding(building)}
-                className={cn(
-                  "flex items-center gap-3 px-4 py-3 active:bg-stone-50 transition-colors",
-                  selectedBuilding?.id === building.id && "bg-brand-50"
-                )}
-              >
-                <ScoreGauge score={building.score} size="sm" />
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-semibold text-stone-900 truncate">
-                    {building.address}
-                  </p>
-                  <p className="text-xs text-stone-500">
-                    {building.reportCount} signalements · {building.postalCode} {building.city}
-                  </p>
-                </div>
-                {(building.trend === "DEGRADING" || building.trend === "degrading") && (
-                  <TrendingDown size={14} className="text-red-500 flex-shrink-0" />
-                )}
+              <div>
+                <h1 className="text-sm font-bold text-stone-900">Carte des signalements</h1>
+                <p className="text-[11px] text-stone-400">
+                  {loading ? "Chargement…" : `${filtered.length} immeuble${filtered.length > 1 ? "s" : ""} affiché${filtered.length > 1 ? "s" : ""}`}
+                </p>
               </div>
-            </Link>
-          ))}
-          {!loading && filteredBuildings.length === 0 && (
-            <div className="px-4 py-8 text-center">
-              <p className="text-sm text-stone-400">Aucun immeuble trouvé</p>
             </div>
-          )}
+
+            {/* Filter chips */}
+            <div className="flex gap-2 overflow-x-auto scrollbar-hide">
+              {SCORE_FILTERS.map((f) => (
+                <button
+                  key={f.id}
+                  onClick={() => setActiveFilter(f.id)}
+                  className={cn(
+                    "flex items-center h-7 px-3 rounded-full text-xs font-semibold whitespace-nowrap transition-all",
+                    activeFilter === f.id
+                      ? "bg-stone-900 text-white shadow-sm"
+                      : "bg-stone-100 text-stone-600 active:bg-stone-200"
+                  )}
+                >
+                  {f.label}
+                </button>
+              ))}
+            </div>
+          </div>
         </div>
       </div>
+
+      {/* Selected building card */}
+      {selected && (
+        <div className="absolute bottom-[80px] left-4 right-4 z-[1001] animate-slide-up">
+          <div className="bg-white rounded-2xl shadow-xl border border-stone-100 overflow-hidden">
+            <div className="p-4">
+              <div className="flex items-start gap-3">
+                <ScoreGauge score={selected.score} size="md" />
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-bold text-stone-900 truncate">{selected.address}</p>
+                  <p className="text-xs text-stone-400 mb-2">{selected.postalCode} {selected.city}</p>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className={cn("text-[11px] font-bold px-2 py-0.5 rounded-full", getScoreColor(selected.score))}>
+                      Score {selected.score.toFixed(1)}/5
+                    </span>
+                    <span className="text-[11px] text-stone-400 flex items-center gap-1">
+                      <AlertCircle size={10} />
+                      {selected.reportCount} signalement{selected.reportCount > 1 ? "s" : ""}
+                    </span>
+                    {(() => {
+                      const t = getTrend(selected.trend);
+                      return <span className={cn("text-[11px] font-medium flex items-center gap-0.5", t.color)}><t.icon size={11} />{t.label}</span>;
+                    })()}
+                  </div>
+                </div>
+                <button
+                  onClick={() => setSelected(null)}
+                  className="w-7 h-7 rounded-full bg-stone-100 flex items-center justify-center flex-shrink-0 active:bg-stone-200"
+                >
+                  <X size={13} className="text-stone-500" />
+                </button>
+              </div>
+              <Link href={`/immeuble/${selected.id}`} className="block mt-3">
+                <button className="w-full h-10 bg-brand-500 text-white rounded-xl text-sm font-semibold active:bg-brand-600 transition-colors">
+                  Voir tous les signalements →
+                </button>
+              </Link>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Bottom sheet — building list */}
+      {!selected && (
+        <div
+          className={cn(
+            "absolute left-0 right-0 z-[1000] transition-all duration-300 ease-out",
+            sheetOpen ? "bottom-[64px]" : "bottom-[64px] translate-y-[calc(100%-72px)]"
+          )}
+        >
+          <div className="bg-white rounded-t-3xl shadow-2xl border-t border-stone-100">
+            {/* Handle + header */}
+            <button
+              className="w-full flex flex-col items-center pt-3 pb-2 px-4 active:bg-stone-50"
+              onClick={() => setSheetOpen((s) => !s)}
+            >
+              <div className="w-10 h-1 bg-stone-200 rounded-full mb-3" />
+              <div className="flex items-center justify-between w-full">
+                <div>
+                  <p className="text-sm font-bold text-stone-900 text-left">
+                    {loading ? "Chargement…" : `${filtered.length} immeuble${filtered.length > 1 ? "s" : ""}`}
+                  </p>
+                  <p className="text-[11px] text-stone-400 text-left">Appuyez pour voir la liste</p>
+                </div>
+                <ChevronUp
+                  size={18}
+                  className={cn("text-stone-400 transition-transform", sheetOpen && "rotate-180")}
+                />
+              </div>
+            </button>
+
+            {/* List */}
+            {sheetOpen && (
+              <div className="max-h-[45vh] overflow-y-auto divide-y divide-stone-50 pb-2">
+                {filtered.length === 0 ? (
+                  <div className="py-10 text-center">
+                    <p className="text-sm text-stone-400">Aucun immeuble trouvé</p>
+                  </div>
+                ) : (
+                  filtered.map((b) => {
+                    const trend = getTrend(b.trend);
+                    return (
+                      <button
+                        key={b.id}
+                        className="w-full flex items-center gap-3 px-4 py-3 active:bg-stone-50 transition-colors text-left"
+                        onClick={() => handleSelect(b)}
+                      >
+                        <ScoreGauge score={b.score} size="sm" />
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-semibold text-stone-900 truncate">{b.address}</p>
+                          <p className="text-xs text-stone-400">
+                            {b.postalCode} {b.city} · {b.reportCount} signalement{b.reportCount > 1 ? "s" : ""}
+                          </p>
+                        </div>
+                        <span className={cn("text-[11px] font-semibold flex items-center gap-0.5 flex-shrink-0", trend.color)}>
+                          <trend.icon size={12} />
+                        </span>
+                      </button>
+                    );
+                  })
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       <BottomNav />
     </div>
