@@ -41,7 +41,7 @@ export default function RootLayout({
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
       </head>
       <body className="bg-surface antialiased">
-        <div className="relative min-h-screen max-w-md mx-auto bg-surface shadow-xl">
+        <div className="relative min-h-screen max-w-md mx-auto bg-surface shadow-xl pt-[env(safe-area-inset-top,0px)]">
           {children}
         </div>
       </body>

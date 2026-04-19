@@ -159,7 +159,7 @@ export default function CartePage() {
   });
 
   return (
-    <div className="h-screen flex flex-col bg-surface">
+    <div className="h-[100dvh] flex flex-col overflow-hidden bg-surface">
 
       {/* ── Header ── */}
       <div className="bg-white border-b border-stone-100 px-4 pt-4 pb-0 flex-shrink-0">

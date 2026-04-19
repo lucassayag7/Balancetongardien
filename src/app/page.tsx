@@ -66,7 +66,7 @@ export default function HomePage() {
   const confirmed = reports.filter((r) => r.validations.some((v) => v.type === "CONFIRM")).length;
 
   return (
-    <div className="h-screen flex flex-col bg-surface">
+    <div className="h-[100dvh] flex flex-col overflow-hidden bg-surface">
       {/* Header */}
       <header className="flex-shrink-0 bg-white border-b border-stone-100 z-30">
         <div className="px-4 py-3">

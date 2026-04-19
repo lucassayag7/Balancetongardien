@@ -62,7 +62,7 @@ export default function ImmeubleDetailPage({ params }: { params: Promise<{ id: s
 
   if (loading) {
     return (
-      <div className="h-screen flex flex-col bg-surface">
+      <div className="h-[100dvh] flex flex-col overflow-hidden bg-surface">
         <Header showBack title="Chargement..." />
         <div className="flex-1 overflow-y-auto px-4 pt-4 space-y-3 pb-20">
           {[1, 2, 3].map((i) => <ReportCardSkeleton key={i} />)}
@@ -74,7 +74,7 @@ export default function ImmeubleDetailPage({ params }: { params: Promise<{ id: s
 
   if (!building) {
     return (
-      <div className="h-screen flex flex-col bg-surface">
+      <div className="h-[100dvh] flex flex-col overflow-hidden bg-surface">
         <Header showBack title="Immeuble introuvable" />
         <div className="flex-1 flex flex-col items-center justify-center px-4 text-center">
           <AlertCircle size={48} className="text-stone-200 mb-4" />
@@ -91,7 +91,7 @@ export default function ImmeubleDetailPage({ params }: { params: Promise<{ id: s
   }
 
   return (
-    <div className="h-screen flex flex-col bg-surface">
+    <div className="h-[100dvh] flex flex-col overflow-hidden bg-surface">
       <Header
         showBack
         title={building.address}
