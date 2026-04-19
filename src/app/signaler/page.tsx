@@ -63,6 +63,7 @@ export default function SignalerPage() {
   const [submitted, setSubmitted] = useState(false);
   const [createdBuildingId, setCreatedBuildingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [uploadError, setUploadError] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
   const update = (updates: Partial<FormState>) => setForm((p) => ({ ...p, ...updates }));
@@ -77,11 +78,14 @@ export default function SignalerPage() {
     const file = e.target.files?.[0];
     if (!file) return;
     const previewUrl = URL.createObjectURL(file);
+    setUploadError(null);
     update({ mediaFile: file, mediaPreviewUrl: previewUrl, uploadingMedia: true });
     try {
       const url = await uploadMedia(file);
       update({ mediaUrl: url, uploadingMedia: false });
-    } catch {
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Erreur inconnue";
+      setUploadError(msg);
       update({ mediaUrl: "", uploadingMedia: false });
     }
   };
@@ -184,7 +188,7 @@ export default function SignalerPage() {
       {/* Contenu de l'étape */}
       <div className="flex-1 overflow-y-auto">
         <div className="px-4 pt-5 pb-8 animate-fade-in" key={step}>
-          {step === 1 && <StepMedia form={form} fileRef={fileRef} onFile={handleFileChange} update={update} />}
+          {step === 1 && <StepMedia form={form} fileRef={fileRef} onFile={handleFileChange} update={update} uploadError={uploadError} />}
           {step === 2 && <StepCategory form={form} update={update} />}
           {step === 3 && <StepDetails form={form} update={update} />}
           {step === 4 && <StepAddress form={form} update={update} onGeolocate={handleGeolocate} />}
@@ -237,7 +241,7 @@ export default function SignalerPage() {
 }
 
 /* ─── Step 1: Media ─────────────────────────────────────────────────── */
-function StepMedia({ form, fileRef, onFile, update }: { form: FormState; fileRef: React.RefObject<HTMLInputElement>; onFile: (e: React.ChangeEvent<HTMLInputElement>) => void; update: (u: Partial<FormState>) => void }) {
+function StepMedia({ form, fileRef, onFile, update, uploadError }: { form: FormState; fileRef: React.RefObject<HTMLInputElement>; onFile: (e: React.ChangeEvent<HTMLInputElement>) => void; update: (u: Partial<FormState>) => void; uploadError: string | null }) {
   return (
     <div>
       <h2 className="text-xl font-bold text-stone-900 mb-1">Ajoutez une preuve</h2>
@@ -263,8 +267,8 @@ function StepMedia({ form, fileRef, onFile, update }: { form: FormState; fileRef
                   <Check size={11} /> Preuve ajoutée
                 </span>
               ) : (
-                <span className="bg-amber-500 text-white text-xs font-semibold px-2 py-1 rounded-full">
-                  ⚠ Upload échoué
+                <span className="bg-red-500 text-white text-xs font-semibold px-2 py-1 rounded-full">
+                  ⚠ {uploadError ?? "Upload échoué"}
                 </span>
               )}
             </div>
