@@ -83,7 +83,7 @@ function BuildingRow({ building }: { building: BuildingAPI }) {
 function SelectedCard({ building, onClose }: { building: BuildingAPI; onClose: () => void }) {
   const s = scoreStyle(building.score);
   return (
-    <div className="absolute bottom-0 left-0 right-0 z-[1001] px-3 pb-3">
+    <div className="absolute bottom-[72px] left-0 right-0 z-[40] px-3 pb-3">
       <div className="bg-white rounded-2xl shadow-2xl border border-stone-100 overflow-hidden">
         <div className="p-4">
           {/* Close */}
@@ -159,7 +159,7 @@ export default function CartePage() {
   });
 
   return (
-    <div className="h-screen flex flex-col overflow-hidden bg-surface">
+    <div className="h-screen flex flex-col bg-surface">
 
       {/* ── Header ── */}
       <div className="bg-white border-b border-stone-100 px-4 pt-4 pb-0 flex-shrink-0">

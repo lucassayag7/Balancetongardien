@@ -76,7 +76,7 @@ function LocateMe({ onLocated }: { onLocated?: (lat: number, lng: number) => voi
   return (
     <button
       onClick={handleLocate}
-      className="absolute bottom-[220px] right-4 z-[1000] w-12 h-12 bg-white rounded-full shadow-lg flex items-center justify-center active:bg-stone-50 transition-colors border border-stone-100"
+      className="absolute bottom-[280px] right-4 z-[1000] w-12 h-12 bg-white rounded-full shadow-lg flex items-center justify-center active:bg-stone-50 transition-colors border border-stone-100"
       aria-label="Me localiser"
     >
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#E8400C" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">

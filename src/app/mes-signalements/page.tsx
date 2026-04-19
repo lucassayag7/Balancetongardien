@@ -55,7 +55,7 @@ export default function MesSignalementsPage() {
   const sentCount = reports.filter((r) => r.actions.some((a) => a.status === "SENT")).length;
 
   return (
-    <div className="h-screen flex flex-col overflow-hidden bg-surface">
+    <div className="h-screen flex flex-col bg-surface">
       <Header
         title="Mes alertes"
         rightAction={

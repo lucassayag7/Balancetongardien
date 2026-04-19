@@ -88,7 +88,7 @@ export default function ComptePage() {
     : "";
 
   return (
-    <div className="h-screen flex flex-col overflow-hidden bg-surface">
+    <div className="h-screen flex flex-col bg-surface">
       <Header
         title="Mon profil"
         rightAction={
